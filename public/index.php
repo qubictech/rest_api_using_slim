@@ -100,7 +100,6 @@ function haveEmptyParams($required_params, $request, $response)
 
     if (!$request_params) {
         $request_params = $request->getParsedBody();;
-        print_r($request_params);
     }
 
     foreach ($required_params as $param) {
