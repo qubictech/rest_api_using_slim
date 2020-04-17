@@ -17,16 +17,22 @@ $app = new \Slim\App;
 
 $app->get('/hello/{name}', function (Request $request, Response $response, array $args) {
     $name = $args['name'];
-    $response->getBody()->write("Hello, $name<br>");    
+    $response->getBody()->write("Hello, $name<br>");
 
     $db = new DbOperations;
 
     return $response;
 });
 
+/**
+ * endpoint: createuser
+ * parameters: email,password,name,school
+ * method: POST
+ */
+
 $app->post('/createuser', function (Request $request, $response) {
 
-    if (!haveEmptyParams(array('email', 'password', 'name', 'school'), $response)) {
+    if (!haveEmptyParams(array('email', 'password', 'name', 'school'), $request, $response)) {
         $request_data = $request->getParsedBody();
 
         $email = $request_data['email'];
@@ -73,10 +79,10 @@ $app->post('/createuser', function (Request $request, $response) {
         }
 
         $message = array();
-            $message['error'] = true;
-            $message['message'] = "An error occured";
+        $message['error'] = true;
+        $message['message'] = "An error occured";
 
-            $response->write(json_encode($message));
+        $response->write(json_encode($message));
 
         return $response
             ->withHeader('Content-type', 'application/json')
@@ -84,13 +90,18 @@ $app->post('/createuser', function (Request $request, $response) {
     }
 });
 
-function haveEmptyParams($required_params, $response)
+function haveEmptyParams($required_params, $request, $response)
 {
     $error = false;
 
     $error_params = '';
 
     $request_params = $_REQUEST;
+
+    if (!$request_params) {
+        $request_params = $request->getParsedBody();;
+        print_r($request_params);
+    }
 
     foreach ($required_params as $param) {
         if (!isset($request_params[$param]) || strlen($request_params[$param]) < 0) {
@@ -103,8 +114,8 @@ function haveEmptyParams($required_params, $response)
         $error_detail = array();
 
         $error_detail['error'] = true;
-
         $error_detail['message'] = 'Required Parameters ' . substr($error_params, 0, -2) . ' are missing';
+        // $error_detail['data'] = $required_params;
 
         $response->write(json_encode($error_detail));
     }
