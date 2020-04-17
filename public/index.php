@@ -96,10 +96,10 @@ function haveEmptyParams($required_params, $request, $response)
 
     $error_params = '';
 
-    $request_params = $_REQUEST;
-
-    if (!$request_params) {
+    if ($request->getContentType() == "application/json") {
         $request_params = $request->getParsedBody();;
+    } else {
+        $request_params = $_REQUEST;
     }
 
     foreach ($required_params as $param) {
