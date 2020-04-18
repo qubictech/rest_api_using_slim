@@ -9,28 +9,62 @@ require '../includes/db_operations.php';
 
 $app = new \Slim\App;
 
+
 /**
- * endpoint: createuser
- * parameters: email,password,name,school
- * method: POST
+ * endpoint: users
+ * job: get all users
+ * response: email,password,name,school
+ * method: GET
  */
 
-$app->get('/hello/{name}', function (Request $request, Response $response, array $args) {
-    $name = $args['name'];
-    $response->getBody()->write("Hello, $name<br>");
-
+$app->get('/users', function (Request $request, $response, array $args) {
     $db = new DbOperations;
+    $users = $db->getUsers();
 
-    return $response;
+    $response_data = array();
+
+    $response_data['error'] = false;
+    $response_data['status'] = 'successfull';
+    $response_data['users'] = $users;
+
+    $response->write(json_encode($response_data))
+        ->withHeader('Content-type', 'application/json')
+        ->withStatus(200);
 });
 
 /**
  * endpoint: createuser
+ * job: get user by id
  * parameters: email,password,name,school
  * method: POST
  */
 
-$app->post('/createuser', function (Request $request, $response) {
+$app->get('/user/{id}', function (Request $request, Response $response, array $args) {
+    $id = $args['id'];
+
+    $db = new DbOperations;
+    $user = $db->getUserById($id);
+
+    $response_data = array();
+
+    $response_data['error'] = false;
+    $response_data['status'] = 'successfull';
+    $response_data['users'] = $user;
+
+    $response->write(json_encode($response_data))
+        ->withHeader('Content-type', 'application/json')
+        ->withStatus(200);
+
+});
+
+/**
+ * endpoint: /user
+ * job: create user
+ * parameters: email,password,name,school
+ * method: POST
+ */
+
+$app->post('/user', function (Request $request, $response) {
 
     if (!haveEmptyParams(array('email', 'password', 'name', 'school'), $request, $response)) {
         $request_data = $request->getParsedBody();
@@ -90,8 +124,32 @@ $app->post('/createuser', function (Request $request, $response) {
     }
 });
 
+/**
+ * endpoint: /user/id
+ * job: update user
+ * parameters: email,name,school
+ * method: PUT
+ */
+
+$app->put('/user/{id}', function (Request $request, Response $response) {
+    // update user by $args['id']
+});
+
+/**
+ * endpoint: /user/id
+ * job: delete user
+ * method: PUT
+ */
+
+$app->delete('/user/{id}', function ($request, $response, $args) {
+    // Delete user by $args['id']
+});
+
 function haveEmptyParams($required_params, $request, $response)
 {
+    // $mediaType = $request->getMediaType();
+    // print_r($mediaType);
+
     $error = false;
 
     $error_params = '';
