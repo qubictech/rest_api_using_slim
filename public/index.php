@@ -7,7 +7,11 @@ require '../vendor/autoload.php';
 require '../includes/db_connect.php';
 require '../includes/db_operations.php';
 
-$app = new \Slim\App;
+$app = new \Slim\App([
+    'settings' => [
+        'displayErrorDetails' => true
+    ]
+]);
 
 
 /**
@@ -33,28 +37,31 @@ $app->get('/users', function (Request $request, $response, array $args) {
 });
 
 /**
- * endpoint: createuser
+ * endpoint: /user/id
  * job: get user by id
  * parameters: email,password,name,school
  * method: POST
  */
 
-$app->get('/user/{id}', function (Request $request, Response $response, array $args) {
+$app->get('/user/{id}', function (Request $request, $response, array $args) {
     $id = $args['id'];
 
     $db = new DbOperations;
     $user = $db->getUserById($id);
-
     $response_data = array();
 
-    $response_data['error'] = false;
-    $response_data['status'] = 'successfull';
-    $response_data['users'] = $user;
+    if ($user['email'] != null) {
+        $response_data['error'] = false;
+        $response_data['status'] = 'successfull';
+        $response_data['users'] = $user;
+    } else {
+        $response_data['error'] = true;
+        $response_data['status'] = 'No user found';
+    }
 
     $response->write(json_encode($response_data))
         ->withHeader('Content-type', 'application/json')
         ->withStatus(200);
-
 });
 
 /**
@@ -131,7 +138,7 @@ $app->post('/user', function (Request $request, $response) {
  * method: PUT
  */
 
-$app->put('/user/{id}', function (Request $request, Response $response) {
+$app->put('/user/{id}', function (Request $request, $response, $args) {
     // update user by $args['id']
 });
 
@@ -141,7 +148,7 @@ $app->put('/user/{id}', function (Request $request, Response $response) {
  * method: PUT
  */
 
-$app->delete('/user/{id}', function ($request, $response, $args) {
+$app->delete('/user/{id}', function (Request $request, $response, $args) {
     // Delete user by $args['id']
 });
 
