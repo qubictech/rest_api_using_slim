@@ -14,14 +14,18 @@ $app = new \Slim\App([
 ]);
 
 
+$app->get('/', function (Request $request, $response, array $args) {
+    echo "<h1>Api is working!</h1>";
+});
+
 /**
  * endpoint: users
  * job: get all users
  * response: email,password,name,school
- * method: GET
+ * method: GET,POST
  */
 
-$app->get('/users', function (Request $request, $response, array $args) {
+$app->map(['GET', 'POST'], '/users', function (Request $request, $response, array $args) {
     $db = new DbOperations;
     $users = $db->getUsers();
 
@@ -80,6 +84,30 @@ $app->post('/user', function (Request $request, $response) {
         $password = $request_data['password'];
         $name = $request_data['name'];
         $school = $request_data['school'];
+
+        if (!validateEmail($email)) {
+            $message = array();
+            $message['error'] = true;
+            $message['message'] = "Bad email format";
+
+            $response->write(json_encode($message));
+
+            return $response
+                ->withHeader('Content-type', 'application/json')
+                ->withStatus(422);
+        }
+
+        if (!validatePassword($password)) {
+            $message = array();
+            $message['error'] = true;
+            $message['message'] = "Bad password format";
+
+            $response->write(json_encode($message));
+
+            return $response
+                ->withHeader('Content-type', 'application/json')
+                ->withStatus(422);
+        }
 
         $hash_password = password_hash($password, PASSWORD_DEFAULT);
 
@@ -140,16 +168,43 @@ $app->post('/user', function (Request $request, $response) {
 
 $app->put('/user/{id}', function (Request $request, $response, $args) {
     // update user by $args['id']
+    if (!haveEmptyParams(array('email', 'name', 'school'), $request, $response)) {
+        $db = new DbOperations;
+
+        $user = $request->getParsedBody();
+        $result = $db->updateUser($args['id'], $user);
+
+        $response_data = array();
+
+        $response_data['error'] = false;
+        $response_data['status'] = 'User Updated!';
+        $response_data['user'] = $user;
+
+        $response->write(json_encode($response_data))
+            ->withHeader('Content-type', 'application/json')
+            ->withStatus(200);
+    }
 });
 
-/**
- * endpoint: /user/id
- * job: delete user
- * method: PUT
- */
+$app->delete('/user/{id}', function ($request, $response, $args) {
+    $id = $args['id'];
+    $db = new DbOperations;
 
-$app->delete('/user/{id}', function (Request $request, $response, $args) {
-    // Delete user by $args['id']
+    $user = $db->getUserById($id);
+    if ($user['email'] != null) {
+        $db->deleteUser($id);
+
+        $response_data = array();
+        $response_data['error'] = false;
+        $response_data['status'] = "User $id Deleted!";
+    } else {
+        $response_data['error'] = true;
+        $response_data['status'] = 'No user found';
+    }
+
+    $response->write(json_encode($response_data))
+        ->withHeader('Content-type', 'application/json')
+        ->withStatus(200);
 });
 
 function haveEmptyParams($required_params, $request, $response)
@@ -185,6 +240,21 @@ function haveEmptyParams($required_params, $request, $response)
     }
 
     return $error;
+}
+
+function validateEmail($email)
+{
+    return ($email . matches(EMAIL_PATTERN));
+}
+
+function validatePassword($password)
+{
+    return $password . matches(PASSWORD_PATTERN);
+}
+
+function validateMobile($mobile)
+{
+    return $mobile . matches(MOBILE_PATTERN);
 }
 
 $app->run();

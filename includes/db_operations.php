@@ -23,6 +23,8 @@ class DbOperations
             } else {
                 return USER_FAILURE;
             }
+
+            $statement->close();
         } else {
             return USER_EXIST;
         }
@@ -47,6 +49,8 @@ class DbOperations
             array_push($users, $user);
         }
 
+        $statement->close();
+
         return $users;
     }
 
@@ -67,7 +71,36 @@ class DbOperations
         $user['name'] = $name;
         $user['school'] = $school;
 
+        $statement->close();
+
         return $user;
+    }
+
+    public function updateUser($id, $args)
+    {
+        $uid = $id;
+        $name = $args['name'];        
+        $school = $args['school'];
+
+        $statement = $this->conn->prepare("UPDATE users SET name = ?, school = ? WHERE id = ?");
+        $statement->bind_param('ssi', $name, $school,$uid);
+
+        $statement->execute();
+
+        $statement->fetch();
+
+        $user = array();
+                
+        $user['name'] = $name;
+        $user['school'] = $school;
+
+        $statement->close();
+
+        return $user;
+    }
+
+    public function deleteUser($id){
+        
     }
 
     private function isEmailExists($email)
@@ -80,4 +113,5 @@ class DbOperations
 
         return $statement->num_rows > 0;
     }
+
 }
